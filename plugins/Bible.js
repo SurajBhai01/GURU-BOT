@@ -1,5 +1,5 @@
 import fetch from 'node-fetch';
-import translate from '@vitalets/google-translate-api';
+import { translate } from '@vitalets/google-translate-api';
 
 const BASE_URL = 'https://bible-api.com';
 
@@ -46,7 +46,7 @@ ${translatedChapterHindi.text}`;
 };
 
 bibleChapterHandler.help = ['bible [chapter_number|chapter_name]'];
-bibleChapterHandler.tags = ['bible', 'chapter'];
+bibleChapterHandler.tags = ['religion'];
 bibleChapterHandler.command = ['bible', 'chapter'];
 
 export default bibleChapterHandler;
