@@ -105,8 +105,6 @@ export async function handler(chatUpdate) {
                     user.role = 'Tadpole'
                 if (!('autolevelup' in user))
                     user.autolevelup = false
-                if (!('chatbot' in user))
-                    user.chatbot = false
             } else {
                 global.db.data.users[m.sender] = {
                     exp: 0,
@@ -125,7 +123,7 @@ export async function handler(chatUpdate) {
                     level: 0,
                     role: 'Tadpole',
                     autolevelup: false,
-                    chatbot: false,
+                    
                 }
                 }
             let chat = global.db.data.chats[m.chat]
@@ -147,7 +145,9 @@ export async function handler(chatUpdate) {
                 if (!("sWelcome" in chat)) chat.sWelcome = ""
                 if (!("useDocument" in chat)) chat.useDocument = false
                 if (!("viewOnce" in chat)) chat.viewOnce = false
+                if (!("viewStory" in chat)) chat.viewStory = false
                 if (!("welcome" in chat)) chat.welcome = false
+                if (!("chatbot" in chat)) chat.chatbot = false
                 if (!isNumber(chat.expired)) chat.expired = 0
             } else
                 global.db.data.chats[m.chat] = {
@@ -168,7 +168,9 @@ export async function handler(chatUpdate) {
                     sWelcome: "",
                     useDocument: false,
                     viewOnce: false,
+                    viewStory: false,
                     welcome: false,
+                    chatbot: false
                 }
           
                 
@@ -192,8 +194,6 @@ export async function handler(chatUpdate) {
             console.error(e)
         }
         if (opts["nyimak"])
-            return
-        if (!m.fromMe && opts["self"])
             return
         if (opts["pconly"] && m.chat.endsWith("g.us"))
             return
@@ -219,7 +219,10 @@ export async function handler(chatUpdate) {
                 await delay(time)
             }, time)
         }
+         if (process.env.MODE && process.env.MODE.toLowerCase() === 'private' && !(isROwner || isOwner))
+          return;
 
+        
         if (m.isBaileys)
             return
         m.exp += Math.ceil(Math.random() * 10)
@@ -501,8 +504,10 @@ export async function handler(chatUpdate) {
         } catch (e) {
             console.log(m, m.quoted, e)
         }
-        if (opts["autoread"])
-            await this.chatRead(m.key).catch(() => {})
+        if (process.env.autoRead)
+            await conn.readMessages([m.key])
+        if (process.env.statusview && m.key.remoteJid === 'status@broadcast') 
+            await conn.readMessages([m.key])
     }
 }
 
@@ -552,7 +557,7 @@ export async function participantsUpdate({
                   let nthMember = groupMetadata.participants.length;
                   let secondText = `Welcome, ${await this.getName(user)}, our ${nthMember}th member`;
           
-                  let welcomeApiUrl = `https://wecomeapi.onrender.com/welcome-image?username=${encodeURIComponent(
+                  let welcomeApiUrl = `https://welcome.guruapi.tech/welcome-image?username=${encodeURIComponent(
                     await this.getName(user)
                   )}&guildName=${encodeURIComponent(await this.getName(id))}&guildIcon=${encodeURIComponent(
                     ppgp
@@ -574,7 +579,7 @@ export async function participantsUpdate({
                         title: "ᴛʜᴇ ɢᴜʀᴜ-ʙᴏᴛ",
                         body: "welcome to Group",
                         thumbnailUrl: welcomeApiUrl,
-                        sourceUrl: 'https://chat.whatsapp.com/F3sB3pR3tClBvVmlIkqDJp',
+                        sourceUrl: 'https://chat.whatsapp.com/BFfD1C0mTDDDfVdKPkxRAA',
                         mediaType: 1,
                         renderLargerThumbnail: true
                         }}})
@@ -605,7 +610,7 @@ export async function participantsUpdate({
                   let nthMember = groupMetadata.participants.length;
                   let secondText = `Goodbye, our ${nthMember}th group member`;
           
-                  let leaveApiUrl = `https://wecomeapi.onrender.com/leave-image?username=${encodeURIComponent(
+                  let leaveApiUrl = `https://welcome.guruapi.tech/leave-image?username=${encodeURIComponent(
                     await this.getName(user)
                   )}&guildName=${encodeURIComponent(await this.getName(id))}&guildIcon=${encodeURIComponent(
                     ppgp
@@ -627,7 +632,7 @@ export async function participantsUpdate({
                         title: "ᴛʜᴇ ɢᴜʀᴜ-ʙᴏᴛ",
                         body: "Goodbye from  Group",
                         thumbnailUrl: leaveApiUrl,
-                        sourceUrl: 'https://chat.whatsapp.com/F3sB3pR3tClBvVmlIkqDJp',
+                        sourceUrl: 'https://chat.whatsapp.com/BFfD1C0mTDDDfVdKPkxRAA',
                         mediaType: 1,
                         renderLargerThumbnail: true
                         }}})
@@ -640,6 +645,7 @@ export async function participantsUpdate({
             break;
             case "promote":
                 const promoteText = (chat.sPromote || this.spromote || conn.spromote || `${emoji.promote} @user *is now admin*`).replace("@user", "@" + participants[0].split("@")[0]);
+                
                 if (chat.detect) {
                     this.sendMessage(id, {
                         text: promoteText.trim(),
@@ -649,6 +655,7 @@ export async function participantsUpdate({
                 break;
             case "demote":
                 const demoteText = (chat.sDemote || this.sdemote || conn.sdemote || `${emoji.demote} @user *demoted from admin*`).replace("@user", "@" + participants[0].split("@")[0]);
+                
                 if (chat.detect) {
                     this.sendMessage(id, {
                         text: demoteText.trim(),
@@ -717,6 +724,11 @@ Delete Chat
  */
 export async function deleteUpdate(message) {
     try {
+        
+       
+      if (typeof process.env.antidelete === 'undefined' || process.env.antidelete.toLowerCase() === 'false') return;
+
+
         const {
             fromMe,
             id,
@@ -728,20 +740,16 @@ export async function deleteUpdate(message) {
         if (!msg)
             return
         let chat = global.db.data.chats[msg.chat] || {}
-        if (chat.antiDelete)
-            return
-            await this.reply(msg.chat, `
+       
+            await this.reply(conn.user.id, `
             ≡ deleted a message 
             ┌─⊷  𝘼𝙉𝙏𝙄 𝘿𝙀𝙇𝙀𝙏𝙀 
             ▢ *Number :* @${participant.split`@`[0]} 
             └─────────────
-            TO DEACTIVE , PRESS 
-            */off antidelete*
-            *.enable delete*
             `.trim(), msg, {
                         mentions: [participant]
                     })
-        this.copyNForward(msg.chat, msg, false).catch(e => console.log(e, msg))
+        this.copyNForward(conn.user.id, msg, false).catch(e => console.log(e, msg))
     } catch (e) {
         console.error(e)
     }

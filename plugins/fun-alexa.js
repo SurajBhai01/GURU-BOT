@@ -7,22 +7,17 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
   }
   
   m.react('🗣️');
-  
-  const options = {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: `text=${encodeURIComponent(text)}&lc=en&key=`
-  };
 
-  const res = await fetch('https://api.simsimi.vn/v1/simtalk', options);
+  const msg = encodeURIComponent(text);
+  
+  const res = await fetch(`https://ultimetron.guruapi.tech/gpt3?prompt=${msg}`);
+
   const json = await res.json();
   
-  if (json.status === '200') {
-    const reply = json.message;
+  
+    let reply = json.completion;
     m.reply(reply);
-  } else {
-    throw json;
-  }
+
 };
 
 handler.help = ['bot'];

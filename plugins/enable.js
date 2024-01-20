@@ -38,7 +38,15 @@ global.dfail('rowner', m, conn)
 throw false
 }
 bot.pmblocker = isEnable
-break	   
+break	  
+case 'autobio':
+  isAll = true
+  if (!isROwner) {
+  global.dfail('rowner', m, conn)
+  throw false
+  }
+  bot.autoBio = isEnable
+  break	 
       case 'detect':
       case 'detector':
         if (!m.isGroup) {
@@ -98,17 +106,15 @@ break
       }
     chat.useDocument = isEnable
     break
-    case 'selfbot':
-    case 'self':
-      case 'selfmode':
-    case 'private':
+    case 'autostatus':
       isAll = true
       if (!isROwner) {
         global.dfail('rowner', m, conn)
         throw false
       }
-      global.opts['self'] = isEnable
+      chat.viewStory = isEnable
       break
+
     case 'antilink':
     case 'antilinkwa':
     case 'antilinkwha':
@@ -138,11 +144,14 @@ break
      break
      
      case 'chatbot':
-     case 'autosimi':
-     case 'autosimsimi':
-      isUser = true
-      user.chatbot = isEnable
-     break
+      if (m.isGroup) {
+        if (!(isAdmin || isOwner)) {
+          global.dfail('admin', m, conn)
+          throw false
+        }
+      }
+      chat.chatbot = isEnable
+      break
      
     case 'restrict':
     case 'restringir':
@@ -207,7 +216,6 @@ break
 ⛊ nsfw
 ⛊ autosticker
 ⛊ detect
-⛊ antidelete
 ⛊ jarvis
 ⛊ antispam
 ⛊ antitoxic
@@ -217,10 +225,10 @@ break
 ⛊ chatbot 
 ╰──────────⳹
 ◈──『 *OWNER*』───⳹
-⛊ selfmode
 ⛊ onlydm
 ⛊ grouponly
 ⛊ autotype
+⛊ autobio
 ╰──────────⳹
 *📌 Example :*
 *${usedPrefix}on* welcome
@@ -239,3 +247,4 @@ handler.tags = ['config']
 handler.command = /^((en|dis)able|(turn)?o(n|ff)|[01])$/i
 
 export default handler
+
